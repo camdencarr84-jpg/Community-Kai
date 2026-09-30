@@ -1,6 +1,6 @@
 # Multi-Service
 
-**Last verified:** 2026-08-12
+**Last verified:** 2026-09-30
 
 Kai supports 29 LLM providers (plus a built-in Free tier). Each provider uses one of three API formats: **OpenAI-compatible** (most services), **Gemini native**, or **Anthropic native** -- plus **LiteRT on-device** for local inference. Users can configure multiple service instances, reorder them, and Kai automatically falls back through the chain on failure.
 
@@ -19,9 +19,12 @@ A supported LLM provider. Each service is defined by:
 
 A configured connection to a service. Users can add multiple instances of the same service (e.g. two OpenAI accounts with different keys). Each instance stores its own:
 
+- Optional display name
 - API key
 - Selected model
 - Base URL (relevant for the OpenAI-Compatible API service)
+
+Users can rename every configured instance, including OpenAI-Compatible connections and on-device models, in its expanded settings card. Names are independent even when instances share the same provider. A blank or whitespace-only name falls back to the provider name. The display name appears in settings cards, the chat service picker, and fallback status; it does not change the provider, model, or connection settings. Names persist across restarts and are included in settings export/import. Older exports without a display name remain supported.
 
 ### Free Tier
 
@@ -145,7 +148,7 @@ Users manage services through the settings screen:
 - **Add** — pick from the list of available services (can add the same service multiple times); the OpenAI-Compatible API and the on-device Local Model are pinned to the top of the picker, followed by the highlighted featured provider Atlas Cloud, with the remaining providers sorted alphabetically
 - **Remove** — delete an instance and its stored credentials; deletion is deferred with a snackbar "Undo" option (~4 seconds) before the service is permanently removed
 - **Reorder** — drag to change priority (first = primary, rest = fallbacks)
-- **Configure** — per-instance API key, model selection, base URL (OpenAI-Compatible only; optional custom model id via checkbox)
+- **Configure** — optional display name, per-instance API key, model selection, base URL (OpenAI-Compatible only; optional custom model id via checkbox)
 - **Free fallback toggle** — controls whether Free is appended as last resort
 - **Sponsors** — the Free tier card lists all GitHub sponsors in a single grid, with active sponsors first followed by past sponsors
 
@@ -160,10 +163,13 @@ Users manage services through the settings screen:
 | `docs/knowledge/free-tier/` | OKF bundle: free-tier policy, snapshot, sources, refresh playbook |
 | `composeApp/src/commonMain/.../data/FreeProviderSuggestions.kt` | Providers recommended in chat when Free is rate-limited with no services configured |
 | `composeApp/src/commonMain/.../data/ModelTransformations.kt` | Maps provider model DTOs to `SettingsModel`, merges with catalog and free-tier flags |
-| `composeApp/src/commonMain/.../data/AppSettings.kt` | Service instance storage, credential persistence, migration |
+| `composeApp/src/commonMain/.../data/AppSettings.kt` | General settings and migration |
+| `composeApp/src/commonMain/.../data/AppSettingsService.kt` | Service instance storage, display names, and credentials |
+| `composeApp/src/commonMain/.../data/AppSettingsImportExport.kt` | Settings export/import, including instance display names |
 | `composeApp/src/commonMain/.../data/RemoteDataRepository.kt` | Fallback chain, request orchestration |
 | `composeApp/src/commonMain/.../network/Requests.kt` | HTTP clients for all three API formats |
 | `composeApp/src/commonMain/.../network/dtos/anthropic/` | Anthropic Messages API DTOs |
+| `composeApp/src/commonMain/.../ui/settings/ServicesSettings.kt` | Service cards and the optional display name field |
 | `composeApp/src/commonMain/.../ui/settings/SettingsViewModel.kt` | Connection validation, service management UI logic |
 | `composeApp/src/commonMain/.../tools/PermissionController.kt` | Runtime permission requests, including the local network gate for LAN server URLs (Android 17+) |
 | `composeApp/src/commonMain/.../tools/LocalNetworkUrl.kt` | Detects LAN base URLs that need the local network permission |

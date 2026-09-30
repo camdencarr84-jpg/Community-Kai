@@ -46,6 +46,33 @@ class AppSettingsTest {
         assertEquals("claude-sonnet-4-20250514", appSettings.getInstanceModelId(instanceId))
     }
 
+    @Test
+    fun `instance display name persists and is removed with instance settings`() {
+        val appSettings = AppSettings(MapSettings())
+        val instanceId = "openai-compatible"
+
+        appSettings.setInstanceDisplayName(instanceId, "Local Ollama")
+        assertEquals("Local Ollama", appSettings.getInstanceDisplayName(instanceId))
+
+        appSettings.removeInstanceSettings(instanceId)
+        assertEquals("", appSettings.getInstanceDisplayName(instanceId))
+    }
+
+    @Test
+    fun `display names stay independent for instances of the same provider`() {
+        val appSettings = AppSettings(MapSettings())
+        appSettings.setInstanceDisplayName("openai-compatible", "Local Ollama")
+        appSettings.setInstanceDisplayName("openai-compatible_2", "Work Server")
+
+        appSettings.setInstanceDisplayName("openai-compatible", "Home Server")
+        assertEquals("Home Server", appSettings.getInstanceDisplayName("openai-compatible"))
+        assertEquals("Work Server", appSettings.getInstanceDisplayName("openai-compatible_2"))
+
+        appSettings.removeInstanceSettings("openai-compatible")
+        assertEquals("", appSettings.getInstanceDisplayName("openai-compatible"))
+        assertEquals("Work Server", appSettings.getInstanceDisplayName("openai-compatible_2"))
+    }
+
     // region Base URL v1 migration
 
     @Test

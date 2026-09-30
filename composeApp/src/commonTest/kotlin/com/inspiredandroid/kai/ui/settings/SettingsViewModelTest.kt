@@ -57,6 +57,7 @@ class SettingsViewModelTest {
     @Test
     fun `initial state reflects configured services`() = runTest {
         fakeRepository.setConfiguredServices(Service.Gemini, Service.OpenAI)
+        fakeRepository.updateInstanceDisplayName("openai", "Work Account")
 
         val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, noOpScheduler, testDispatcher)
 
@@ -67,6 +68,49 @@ class SettingsViewModelTest {
             assertEquals("gemini", state.configuredServices[0].instanceId)
             assertEquals(Service.OpenAI, state.configuredServices[1].service)
             assertEquals("openai", state.configuredServices[1].instanceId)
+            assertEquals("Work Account", state.configuredServices[1].displayName)
+        }
+    }
+
+    @Test
+    fun `onChangeServiceDisplayName updates the configured instance`() = runTest {
+        fakeRepository.setConfiguredServices(Service.OpenAICompatible)
+        val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, noOpScheduler, testDispatcher)
+
+        viewModel.state.test {
+            assertEquals("", awaitItem().configuredServices.single().displayName)
+
+            viewModel.actions.onChangeServiceDisplayName("openai-compatible", "Local Ollama")
+
+            assertEquals("Local Ollama", awaitItem().configuredServices.single().displayName)
+            assertEquals("Local Ollama", fakeRepository.getInstanceDisplayName("openai-compatible"))
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `renaming and clearing one instance leaves the other instance unchanged`() = runTest {
+        fakeRepository.setConfiguredServices(Service.OpenAICompatible, Service.OpenAICompatible)
+        fakeRepository.updateInstanceDisplayName("openai-compatible_2", "Work Server")
+        val viewModel = SettingsViewModel(fakeRepository, fakeDaemonController, fakeNotificationPermissionController, noOpScheduler, testDispatcher)
+
+        viewModel.state.test {
+            val initial = awaitItem().configuredServices
+            assertEquals("", initial[0].displayName)
+            assertEquals("Work Server", initial[1].displayName)
+
+            viewModel.actions.onChangeServiceDisplayName("openai-compatible", "Local Ollama")
+            val renamed = awaitItem().configuredServices
+            assertEquals("Local Ollama", renamed[0].displayName)
+            assertEquals("Work Server", renamed[1].displayName)
+
+            viewModel.actions.onChangeServiceDisplayName("openai-compatible", "")
+            val cleared = awaitItem().configuredServices
+            assertEquals("", cleared[0].displayName)
+            assertEquals("Work Server", cleared[1].displayName)
+            assertEquals("", fakeRepository.getInstanceDisplayName("openai-compatible"))
+            assertEquals("Work Server", fakeRepository.getInstanceDisplayName("openai-compatible_2"))
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
